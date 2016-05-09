@@ -26,48 +26,55 @@ them now as they migrate towards using path objects in the future.
 Rationale
 =========
 
-Historically in Python, file system paths have been represented as
-strings or bytes. This choice of representation has stemmed from C's
-own decision to represent file system paths as
-``const char *`` [#libc-open]_. While that is a totally serviceable
-format to use for file system paths, it's not necessarily optimal. At
-issue is the fact that while all file system paths can be represented
-as strings or bytes, not all strings or bytes represent a file system
-path; having a format and structure to file system paths makes their
-string/bytes representation act as an encoding.
+Historically in Python, file system paths have been represented as 
+strings or bytes. This choice of representation has stemmed from C's 
+own decision to represent file system paths as ``const char *`` 
+[#libc-open]_. While that is a totally serviceable format to use for 
+file system paths, it's not necessarily optimal. At issue is the fact 
+that while all file system paths can be represented as strings or 
+bytes, not all strings or bytes are meant to represent a file system 
+path; having a format and structure to file system paths makes their 
+string/bytes representation act as a serialization or encoding. By the 
+introduction of ``os.scandir`` in the standard library in Python 3.5, 
+there are now also ``DirEntry`` objects which are more 
+performance-oriented, but have an interface large compatible with 
+pathlib objects.
 
-To help elevate the representation of file system paths from their
-encoding as strings and bytes to a more appropriate object
-representation, the pathlib module [#pathlib]_ was provisionally
-introduced in Python 3.4 through PEP 428. While considered by some as
-an improvement over strings and bytes for file system paths, it has
-suffered from a lack of adoption. Typically the two key issues listed
-for the low adoption rate has been the lack of support in the standard
-library and the difficulty of safely extracting the string
-representation of the path from a ``pathlib.PurePath``
-object in a safe manner for use in APIs that don't support pathlib
-objects natively (as the pathlib module does not support ``bytes``
-paths, support for that type has never been a concern).
+To help elevate the representation of file system paths from their 
+encoding as strings and bytes to a more appropriate object 
+representation, the pathlib module [#pathlib]_ was provisionally 
+introduced in Python 3.4 through PEP 428. While considered by some as 
+an improvement over strings and bytes for file system paths, it has 
+suffered from a lack of adoption. Typically the key issue mentioned 
+for the low adoption rate has been the lack of support in the standard 
+library. This is related to the frequent need of converting path 
+objects to and from strings and the difficulty of safely extracting 
+the string or bytes representation of the path from a 
+``pathlib.PurePath`` or ``DirEntry`` object for use in APIs that don't 
+support such objects natively.
 
-The lack of support in the standard library has stemmed from the fact
-that the pathlib module was provisional. The acceptance of this PEP
-will lead to the removal of the module's provisional status, allowing
-the standard library to support pathlib object widely.
+The lack of support in the standard library has, on the one hand, 
+stemmed from the fact that the pathlib module was provisional. On the 
+other hand, the acceptance of this PEP will lead to wide pathlib 
+support in the standard library, making way for the removal of the 
+module's provisional status. This PEP is also expected to lead to 
+pathlib support in third-party modules.
 
-The lack of safety in converting pathlib objects to strings comes from
-the fact that only way to get a string representation of the path was
-to pass the object to ``str()``. This can pose a
-problem when done blindly as nearly all Python objects have some
-string representation whether they are a path or not, e.g.
-``str(None)`` will give a result that
-``builtins.open()`` [#builtins-open]_ will happily use to create a new
-file.
+One issue in converting path objects to strings comes from the fact 
+that the only way to get a string representation of the path was to 
+pass the object to ``str()``. This can pose a problem when done 
+blindly as nearly all Python objects have some string representation 
+whether they are a path or not, e.g. ``str(None)`` will give a result 
+that ``builtins.open()`` [#builtins-open]_ will happily use to create 
+a new file.
 
-This PEP then proposes to introduce a new protocol for objects to
-follow which represent file system paths. Providing a protocol allows
-for clear signalling of what objects represent file system paths as
-well as a way to extract a lower-level encoding that can be used with
-older APIs which only support strings or bytes.
+This PEP then proposes to introduce a new protocol to be followed by 
+objects which represent file system paths. Providing a protocol and 
+associated type hinting tools allows for clear signalling of what 
+objects represent file system paths as well as a function to extract a 
+lower-level encoding. This function can be used together with 
+older APIs which only support strings or bytes, or be used at the 
+interface within newer versions of such APIs.
 
 Discussions regarding path objects that led to this PEP can be found
 in multiple threads on the python-ideas mailing list archive
