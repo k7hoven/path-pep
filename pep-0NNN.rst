@@ -121,19 +121,40 @@ a ``str`` should be returned as the preferred path representation.
 Standard library changes
 ------------------------
 
-It is expected that most APIs in Python's standard library that
-currently accept a file system path will be updated appropriately to
-accept path objects (whether that requires code or simply an update
-to documentation will vary). The modules mentioned below, though,
-deserve specific details as they have either fundamental changes that
-empower the ability to use path objects, or entail additions/removal
-of APIs.
+It is expected that most APIs in Python's standard library that 
+currently accept a file system path will be updated appropriately to 
+accept path objects (whether that requires code or simply an update to 
+documentation will vary). 
+
+While valid use cases for byte-string paths may be rare, the majority 
+of the standard library currently supports both ``str`` and ``bytes`` 
+instances as file system paths. For returning paths, functions use the 
+same string type as was passed as argument(s). Regarding that, this PEP 
+respects the status quo. Consequently, path objects that can carry a 
+``bytes`` representation, such as ``DirEntry``, will work equally well 
+as the usual ``str``-based objects, and the standard library will 
+respect the underlying type.
+
+
+The standard library will lead the way in accepting path objects as 
+arguments. The API generalizations involve ``open``, ``ntpath``, 
+``posixpath``, path-related functions in ``os`` (including 
+``os.scandir`` and "``os.``"``DirEntry``), functions in ``shutil``, 
+``fileinput``, ``filecmp``, ``zipfile``, ``tarfile``, ``tempfile`` (for 
+the ``dir`` keyword arguments), ``fnmatch``, ``glob``, and ``pathlib``. 
+As discussed separately below, proper type hinting of path-related code 
+benefits from additions to ``typing``. Also the changes listed in 
+the following deserve specific details as they are either fundamental 
+changes that empower the ability to use path objects, or entail 
+additions/removal of APIs.
 
 
 builtins
 ''''''''
 
-``open()`` [#builtins-open]_ will be updated to accept path objects.
+``open()`` [#builtins-open]_ will be updated to accept all flavors of 
+path objects, while of course still accepting both ``str`` and ``bytes 
+as before.
 
 
 os
