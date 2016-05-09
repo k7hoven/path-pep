@@ -243,13 +243,14 @@ currently found on the ``path`` attribute of ``DirEntry`` instances.
 os.path
 '''''''
 
-The various path-manipulation functions of ``os.path`` [#os-path]_
-will be updated to accept path objects. For polymorphic functions that
-accept both bytes and strings, they will be updated to simply use
-code very much similar to
-``path.__fspath__() if  hasattr(path, '__fspath__') else path``. This
-will allow for their pre-existing type-checking code to continue to
-function.
+The various path-manipulation functions found in ``os.path`` 
+[#os-path]_ will be updated to accept path objects. For polymorphic 
+functions that accept both bytes and strings, they will be updated to 
+simply use code very much similar to ``path.__fspath__() if 
+hasattr(path, '__fspath__') else path``, which corresponds to using
+the keyword argument ``type_constraint = (str, bytes)`` in 
+``os.fspath``. This will allow for their pre-existing type-checking 
+code to continue to function.
 
 During the discussions leading up to this PEP it was suggested that
 ``os.path`` not be updated using an "explicit is better than implicit"
