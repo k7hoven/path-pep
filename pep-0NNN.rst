@@ -100,16 +100,14 @@ The following abstract base class defines the protocol for an object
 to be considered a path object::
 
     import abc
-    import typing as t
 
-
-    class PathLike(abc.ABC):
+    class FSPathABC(abc.ABC):
 
         """Abstract base class for implementing the file system path protocol."""
 
         @abc.abstractmethod
-        def __fspath__(self) -> t.Union[str, bytes]:
-            """Return the file system path representation of the object."""
+        def __fspath__(self):
+            """Return str (or bytes) representation of the path object."""
             raise NotImplementedError
 
 
