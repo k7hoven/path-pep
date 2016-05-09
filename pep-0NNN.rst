@@ -362,12 +362,21 @@ file system path as opposed to an URI path component, for instance.
 Type hint for path-like objects
 -------------------------------
 
-Creating a proper type hint for  APIs that accept path objects as well
-as strings and bytes will probably be needed. It could be as simple
-as defining ``typing.Path`` and then having
-``typing.PathLike = typing.Union[typing.Path, str, bytes]``, but it
-should be properly discussed with the right type hinting experts if
-this is the best approach.
+Creating a proper type hint for APIs that accept path objects as well 
+as strings and bytes will probably be needed. It could be as simple as 
+defining ``typing.FSPath`` and then having ``typing.AnyFSPath = 
+typing.Union[typing.FSPath, str, bytes]``. However, type hinting could 
+be made even more precise using type variables and, for instance 
+``typing.FSPath[str]``, to represent a path with an underlying type of 
+``str``. This approach is sketched in a spin-off thread of the pathlib 
+discussions on python-ideas close to the end of the discussion phase 
+before beginning to draft this PEP:
+
+https://mail.python.org/pipermail/python-ideas/2016-April/039827.html
+
+However, this will require further discussion with the right type hinting 
+experts if this is the best approach and how it should be implemented 
+in detail.
 
 
 Rejected Ideas
