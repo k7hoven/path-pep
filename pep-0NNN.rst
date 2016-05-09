@@ -348,12 +348,15 @@ Open Issues
 The name and location of the protocol's ABC
 -------------------------------------------
 
-The name of the ABC being proposed to represent the protocol has not
-been discussed very much. Another viable name is ``pathlib.PathABC``.
-The name can't be ``pathlib.Path`` as that already exists.
+The name of the ABC being proposed to represent the protocol has not 
+been discussed very much. Another viable name is ``pathlib.PathABC`` or 
+``pathlib.PathLike``. The name can't be ``pathlib.Path`` as that 
+already exists.
 
 It's also an open issue as to whether the ABC belongs in the pathlib,
-os, or os.path module.
+os, or os.path module. Depending on the location of the ABC, it may 
+vary whether it is desirable for the name to clarify that the path is a 
+file system path as opposed to an URI path component, for instance.
 
 
 Type hint for path-like objects
