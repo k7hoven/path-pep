@@ -135,7 +135,6 @@ respects the status quo. Consequently, path objects that can carry a
 as the usual ``str``-based objects, and the standard library will 
 respect the underlying type.
 
-
 The standard library will lead the way in accepting path objects as 
 arguments. The API generalizations involve ``open``, ``ntpath``, 
 ``posixpath``, path-related functions in ``os`` (including 
@@ -162,62 +161,83 @@ os
 
 The ``fspath()`` function will be added with the following semantics::
 
-    import typing as t
-
-
-    def fspath(path: t.Union[PathLike, str]) -> str:
+    def fspath(path, *, type_constraint = str):
         """Return the string representation of the path.
 
-        If a string is passed in then it is returned unchanged.
+        If a string is passed in, it is returned unchanged. 
+        Otherwise, the __fspath__ method will be invoked to provide 
+        a string or byte string representation. The return
+        value (pathstring) will satisfy the requirement 
+
+            isinstance(pathstring, path_constraint)
+
+        or otherwise an exception is raised.
         """
+        if isinstance(path, type_constraint):
+            return path
         if hasattr(path, '__fspath__'):
-            path = path.__fspath__()
-        if not isinstance(path, str):
-            type_name = type(path).__name__
-            raise TypeError("expected a str or path object, not " + type_name)
-        return path
+            pathstring = path.__fspath__()
+        else:
+            raise TypeError("path must implement __fspath__() or be an instance of type_constraint")
+        if not isinstance(pathstring, type_constraint):
+            type_name = type(pathstring).__name__
+            raise TypeError("__fspath__() must return a str or bytes, not " + type_name)
+        return pathstring
 
-The ``os.fsencode()`` [#os-fsencode]_ and
-``os.fsdecode()`` [#os-fsdecode]_ functions will be updated to accept
-path objects. As both functions coerce their arguments to
-``bytes`` and ``str``, respectively, they will be updated to call
-``__fspath__()`` as necessary and then peform their appropriate
-coercion operations as if the return value from ``__fspath__()`` had
-been the original argument to the coercion function in question.
+While using ``str``-based paths is expected to cover the vast majority 
+of use cases, different scenarios exist depending on the type(s) dealt 
+with. In the above, the ``fspath`` function by default rejects anything 
+that is not ``str`` or ``str``-based. To polymorphically support both 
+``str``- and ``bytes``-based paths, like the standard library largely 
+does, one may use ``type_constraint = (str, bytes)``. For code that 
+explicitly deals with ``bytes``-based paths, it is possible to use 
+``type_constraint = bytes``.
 
-The addition of ``os.fspath()``, the updates to
-``os.fsencode()``/``os.fsdecode()``, and the current semantics of
-``pathlib.PurePath`` provide the semantics necessary to
-get the path representation one prefers. For a path object,
-``pathlib.PurePath``/``Path`` can be used. If ``str`` is desired and
-no guesses about ``bytes`` encodings is desired to decode to a
-``str``, then ``os.fspath()`` can be used. If a ``str`` is desired and
-the encoding of ``bytes`` should be assumed to be the default file
-system encoding, then ``os.fsdecode()`` should be used. Finally, if a
-``bytes`` representation is desired and any strings should be encoded
-using the default file system encoding then ``os.fsencode()`` is used.
-No function is provided for the case of wanting a ``bytes``
-representation but without any automatic encoding to help discourage
-the use of multiple ``bytes`` encodings on a single file system. This
-PEP recommends using path objects when possible and falling back to
-string paths as necessary.
+Also ``os.fsencode()`` [#os-fsencode]_ and ``os.fsdecode()`` 
+[#os-fsdecode]_ functions will be updated to accept path objects. As 
+both functions coerce their arguments to ``bytes`` and ``str``, 
+respectively, they will be updated to call ``__fspath__()`` as 
+necessary and then peform their appropriate coercion operations as if 
+the return value from ``__fspath__()`` had been the original argument 
+to the coercion function in question. When coercion to ``str`` or 
+``bytes`` is desired, one may use these functions instead of 
+``os.fspath`` which does not do implicit decoding or encoding.
 
-Another way to view this is as a hierarchy of file system path
-representations (highest- to lowest-level): path -> str -> bytes. The
-functions and classes under discussion can all accept objects on the
-same level of the hierarchy, but they vary in whether they promote or
-demote objects to another level. The ``pathlib.PurePath`` class can
-promote a ``str`` to a path object. The ``os.fspath()`` function can
-demote a path object to a string, but only if ``__fspath__()`` returns
-a string. The ``os.fsdecode()`` function will demote a path object to
-a string or promote a ``bytes`` object to a ``str``. The
-``os.fsencode()`` function will demote a path or string object to
-``bytes``. There is no function that provides a way to demote a path
-object directly to ``bytes`` and not allow demoting strings.
+To obtain a pathlib object corresponding to a string path, one uses the 
+appropriate pathlib class as before. However, pathlib will reject 
+bytes-based paths, as it higher-level and ``str``-only. This PEP 
+recommends using path objects when possible and falling back to string 
+paths as necessary.
 
-The ``DirEntry`` object [#os-direntry]_ will gain an ``__fspath__()``
-method. It will return the value currently found on the ``path``
-attribute of ``DirEntry`` instances.
+Another way to view the interaction of different types is as a 
+hierarchy of file system path representations. The hierarchy has two 
+branches (from higher-level to lower-level)::
+
+    path (str-based) -> str (-> bytes, eventually)
+    path (bytes-based) -> bytes
+
+Most users do not need to care about the lowest level (``bytes``), and 
+an increasing proportion of code is expected to only deal with the 
+higher-level objects, especially those in the ``str``-based branch.
+
+The functions and classes under discussion can all accept objects on 
+the same level of the hierarchy, but they vary in whether they promote 
+or demote objects to another level. The ``pathlib.PurePath`` class can 
+promote a ``str`` to a path object. The ``os.fspath()`` function can 
+demote a path object to a string or byte string, depending on which 
+type ``__fspath__()`` returns. The ``os.fsdecode()`` function will 
+demote a path object to a string or promote a ``bytes`` or 
+``bytes``-based object to a ``str``. The ``os.fsencode()`` function 
+will demote a path or string object to ``bytes``. There is no function 
+that provides a way to demote a path object directly to ``bytes`` and 
+not allow demoting strings.
+
+Objects of the ``DirEntry`` type [#os-direntry]_ will gain an 
+``__fspath__()`` method returning an instance of either ``str`` or 
+``bytes``, depending on the type of the underlying path representation. 
+This is the same type as the underlying type of the path originally 
+passed to ``os.scandir``. The return value of ``__fspath__()`` is 
+currently found on the ``path`` attribute of ``DirEntry`` instances.
 
 
 os.path
