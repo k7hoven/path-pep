@@ -273,15 +273,17 @@ projects.
 pathlib
 '''''''
 
-The ``PathLike`` ABC as discussed in the Protocol_ section will be
-added to the pathlib module [#pathlib]_. The constructor for
-``pathlib.PurePath`` and ``pathlib.Path`` will be updated to accept
-path objects. Both ``PurePath`` and ``Path`` will continue to not
-accept ``bytes`` path representations, and so if ``__fspath__()``
-returns ``bytes`` it will raise an exception.
+The ``FSPathABC`` ABC as discussed in the Protocol_ section will be 
+added to the pathlib module [#pathlib]_. The constructor for 
+``pathlib.PurePath`` and ``pathlib.Path`` will be updated to accept 
+path objects. All five public path classes in pathlib will continue to 
+not accept ``bytes`` path representations, and so if ``__fspath__()`` 
+returns ``bytes``, an exception will be raised.
 
 The ``path`` attribute which has yet to be included in a release of
-Python will be removed as this PEP makes its usefulness redundant.
+Python will be removed as this PEP makes its usefulness redundant. (As 
+a side note: it could be considered to deprecate ``.path`` in 
+``DirEntry`` as well, or to recommend using ``os.fspath`` instead.)
 
 The ``open()`` method on ``Path`` objects will be removed. As
 ``builtins.open()`` [#builtins-open]_ will be updated to accept path
