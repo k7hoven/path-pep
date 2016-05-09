@@ -169,7 +169,7 @@ The ``fspath()`` function will be added with the following semantics::
         a string or byte string representation. The return
         value (pathstring) will satisfy the requirement 
 
-            isinstance(pathstring, path_constraint)
+            isinstance(pathstring, type_constraint)
 
         or otherwise an exception is raised.
         """
